@@ -87,15 +87,14 @@ public class BlobsStorageService implements StorageService {
         }
     }
 
-    private CloudBlockBlob resolveSingularBlob(ObjectType objectType, String objectKey, AzureNamedAccountCredentials credentials, CloudBlobContainer
-            azureContainer) {
+    private CloudBlockBlob resolveSingularBlob(ObjectType objectType, String objectKey, AzureNamedAccountCredentials credentials, CloudBlobContainer azureContainer) {
         String rootFolder = daoRoot(credentials, objectType.getGroup()) + "/" + objectKey;
 
         try {
-            Iterable<ListBlobItem> blobItems = listBlobs(azureContainer,rootFolder,true,false);
+            Iterable<ListBlobItem> blobItems = listBlobs(azureContainer, rootFolder,true,false);
             CloudBlockBlob foundBlockItem = null;
 
-            int size=0;
+            int size = 0;
             for (ListBlobItem blobItem : blobItems) {
                 if(size > 1) {
                     throw new IllegalArgumentException("Unable to resolve singular " + objectType + " at " + daoRoot(credentials, objectType.getGroup()) + '/' + objectKey + ".");
@@ -309,7 +308,7 @@ public class BlobsStorageService implements StorageService {
 
             log.debug("Listing {}", objectType.getGroup());
 
-            Iterable<ListBlobItem> blobItems = listBlobs(azureContainer,rootFolder,true,true);
+            Iterable<ListBlobItem> blobItems = listBlobs(azureContainer, rootFolder,true,true);
 
             if (blobItems != null) {
                 for (ListBlobItem blobItem : blobItems) {
@@ -360,7 +359,7 @@ public class BlobsStorageService implements StorageService {
     }
 
     protected Iterable<ListBlobItem> listBlobs(CloudBlobContainer container, String prefix, boolean useFlatBlobListing, boolean isFolder) {
-        return container.listBlobs(prefix,useFlatBlobListing);
+        return container.listBlobs(prefix, useFlatBlobListing);
     }
 
     public CloudBlockBlob getBlockBlobReference(CloudBlobContainer container, final String blobName) throws URISyntaxException, StorageException {

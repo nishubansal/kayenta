@@ -33,17 +33,17 @@ import java.util.*;
 @Slf4j
 public class TestableBlobsStorageService extends BlobsStorageService {
 
-    public HashMap<String,String> blobStored;
+    public HashMap<String,String> blobStored = new HashMap<>();
 
-    TestableBlobsStorageService(ObjectMapper kayentaObjectMapper, List<String> accountNames, AccountCredentialsRepository accountCredentialsRepository, CanaryConfigIndex canaryConfigIndex) {
+    TestableBlobsStorageService(List<String> accountNames, ObjectMapper kayentaObjectMapper, AccountCredentialsRepository accountCredentialsRepository, CanaryConfigIndex canaryConfigIndex) {
         super(accountNames, kayentaObjectMapper, accountCredentialsRepository, canaryConfigIndex);
-        this.blobStored = new HashMap<>();
     }
 
     @Override
     protected Iterable<ListBlobItem> listBlobs(CloudBlobContainer container, String prefix, boolean useFlatBlobListing, boolean isFolder) {
-        if (blobStored.get("exceptionKey").equals("1")) {
-            throw new IllegalArgumentException("Item not found at "+prefix);
+        String value = blobStored.get("exceptionKey");
+        if (value != null && value.equals("1")) {
+            throw new IllegalArgumentException("Item not found at " +prefix);
         } else {
             Iterable<ListBlobItem> mockBlobItems = new ArrayList<>();
             String filename = "canary_test.json";

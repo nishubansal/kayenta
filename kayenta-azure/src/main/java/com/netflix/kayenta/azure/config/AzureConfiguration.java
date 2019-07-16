@@ -20,7 +20,9 @@ import com.netflix.kayenta.azure.security.AzureCredentials;
 import com.netflix.kayenta.azure.security.AzureNamedAccountCredentials;
 import com.netflix.kayenta.security.AccountCredentials;
 import com.netflix.kayenta.security.AccountCredentialsRepository;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -61,7 +63,7 @@ public class AzureConfiguration {
       try {
         String accountAccessKey = azureManagedAccount.getAccountAccessKey();
         String endpointSuffix = azureManagedAccount.getEndpointSuffix();
-        AzureCredentials azureCredentials = new AzureCredentials(storageAccountName,accountAccessKey,endpointSuffix);
+        AzureCredentials azureCredentials = new AzureCredentials(storageAccountName, accountAccessKey, endpointSuffix);
 
         AzureNamedAccountCredentials.AzureNamedAccountCredentialsBuilder azureNamedAccountCredentialsBuilder =
                 AzureNamedAccountCredentials

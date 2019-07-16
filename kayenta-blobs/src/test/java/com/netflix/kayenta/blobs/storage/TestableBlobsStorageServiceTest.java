@@ -43,31 +43,22 @@ import static org.mockito.Mockito.*;
 @Slf4j
 public class TestableBlobsStorageServiceTest {
 
-    private TestableBlobsStorageService testBlobsStorageService;
-
-    private AccountCredentials accountCredentials;
     private String rootFolder = "testRootFolder";
+    private TestableBlobsStorageService testBlobsStorageService;
+    private AccountCredentials accountCredentials;
     private AccountCredentialsRepository credentialsRepository;
-
-    @Autowired
-    private ObjectMapper kayentaObjectMapper;
-
-    @Autowired
-    AccountCredentialsRepository accountCredentialsRepository;
-
-    @Autowired
-    CanaryConfigIndex canaryConfigIndex;
+    private CanaryConfigIndex mockedCanaryConfigIndex;
 
     @Before
     public void setUp() {
-        List<String> testAccountNames = Arrays.asList("AzDev_Testing_Account_1","AzDev_Testing_Account_2");
+        List<String> testAccountNames = Arrays.asList("AzDev_Testing_Account_1", "AzDev_Testing_Account_2");
         String kayenataAccountName = "Kayenta_Account_1";
         String azureAccountName = "AzDev_Testing_Account_1";
         String accountAccessKey = "testAccessKey";
 
         AzureNamedAccountCredentials.AzureNamedAccountCredentialsBuilder credentialsBuilder = AzureNamedAccountCredentials.builder();
         credentialsBuilder.name(kayenataAccountName);
-        credentialsBuilder.credentials(new AzureCredentials(azureAccountName,accountAccessKey,"core.windows.net"));
+        credentialsBuilder.credentials(new AzureCredentials(azureAccountName, accountAccessKey,"core.windows.net"));
         credentialsBuilder.rootFolder(rootFolder);
         credentialsBuilder.azureContainer(null);
         accountCredentials = credentialsBuilder.build();
@@ -75,10 +66,10 @@ public class TestableBlobsStorageServiceTest {
         credentialsRepository = new MapBackedAccountCredentialsRepository();
         credentialsRepository.save(kayenataAccountName, accountCredentials);
 
-        this.kayentaObjectMapper = new ObjectMapper();
-        this.canaryConfigIndex = mock(CanaryConfigIndex.class);
+        ObjectMapper kayentaObjectMapper = new ObjectMapper();
+        this.mockedCanaryConfigIndex = mock(CanaryConfigIndex.class);
 
-        this.testBlobsStorageService = new TestableBlobsStorageService(kayentaObjectMapper,testAccountNames,credentialsRepository,canaryConfigIndex);
+        this.testBlobsStorageService = new TestableBlobsStorageService(testAccountNames, kayentaObjectMapper, credentialsRepository, mockedCanaryConfigIndex);
     }
 
     @After
@@ -119,8 +110,8 @@ public class TestableBlobsStorageServiceTest {
         AccountCredentialsRepository mockCredentialsRepository = mock(AccountCredentialsRepository.class);
         doReturn(credentialsRepository.getOne(accountName)).when(mockCredentialsRepository).getOne(anyString());
 
-        when(canaryConfigIndex.getRedisTime()).thenReturn(1163643740L);
-        when(canaryConfigIndex.getIdFromName(accountCredentials,canaryConfigName,Collections.singletonList(application))).thenReturn(null);
+        when(mockedCanaryConfigIndex.getRedisTime()).thenReturn(1163643740L);
+        when(mockedCanaryConfigIndex.getIdFromName(accountCredentials,canaryConfigName,Collections.singletonList(application))).thenReturn(null);
 
         String fakeFileName = "canary_config.json";
         String fakeBlobName = keytoPath(rootFolder,objectType.getGroup(),testItemKey,fakeFileName);
@@ -146,24 +137,24 @@ public class TestableBlobsStorageServiceTest {
         doReturn(credentialsRepository.getOne(accountName)).when(mockCredentialsRepository).getOne(anyString());
 
         String fakeBlobName = rootFolder+"/"+objectType.getGroup()+"/"+testItemKey+"/canary_test.json";
-        when(canaryConfigIndex.getRedisTime()).thenReturn(1163643740L);
+        when(mockedCanaryConfigIndex.getRedisTime()).thenReturn(1163643740L);
 
-        HashMap<String ,Object> map = new HashMap<String, Object>();
-        List<String> applications = new ArrayList<String>();
+        HashMap<String ,Object> map = new HashMap<>();
+        List<String> applications = new ArrayList<>();
         applications.add("Test_App");
-        map.put("name",new String(fakeBlobName));
-        map.put("applications",applications);
+        map.put("name", fakeBlobName);
+        map.put("applications", applications);
 
-        when(canaryConfigIndex.getSummaryFromId(accountCredentials,testItemKey)).thenReturn(map);
-        doNothing().when(canaryConfigIndex).finishPendingUpdate(Mockito.any(),Mockito.any(),Mockito.any());
+        when(mockedCanaryConfigIndex.getSummaryFromId(accountCredentials,testItemKey)).thenReturn(map);
+        doNothing().when(mockedCanaryConfigIndex).finishPendingUpdate(Mockito.any(), Mockito.any(), Mockito.any());
 
         try {
             log.info("Running deleteObjectTest for rootFolder/"+objectType.getGroup()+"/"+testItemKey);
-            testBlobsStorageService.deleteObject(accountName,objectType,testItemKey);
+            testBlobsStorageService.deleteObject(accountName, objectType, testItemKey);
             HashMap<String,String> result = testBlobsStorageService.blobStored;
-            Assert.assertEquals("invoked",result.get(String.format("deleteIfexists(%s)",fakeBlobName)));
+            Assert.assertEquals("invoked", result.get(String.format("deleteIfexists(%s)", fakeBlobName)));
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("Unable to resolve account "+accountName+".",e.getMessage());
+            Assert.assertEquals("Unable to resolve account "+accountName+".", e.getMessage());
         }
     }
 
@@ -175,65 +166,68 @@ public class TestableBlobsStorageServiceTest {
 
         try{
             log.info("Running listObjectKeysTest for rootFolder"+"/"+objectType.getGroup()+"/");
-            List<Map<String, Object>> result =  testBlobsStorageService.listObjectKeys(accountName,objectType,applications,skipIndex);
-            if(objectType==ObjectType.CANARY_CONFIG) {
+            List<Map<String, Object>> result =  testBlobsStorageService.listObjectKeys(accountName, objectType, applications, skipIndex);
+            if(objectType == ObjectType.CANARY_CONFIG) {
                 Assert.assertEquals("canary_test", result.get(0).get("name"));
             } else {
                 Assert.assertEquals(6, result.size());
             }
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("Unable to resolve account "+accountName+".",e.getMessage());
+            Assert.assertEquals("Unable to resolve account "+accountName+".", e.getMessage());
         }
     }
 
     @DataProvider
     public static Object[][] servicesAccountDataset() {
         return new Object[][] {
-                {"AzDev_Testing_Account_1",true}, {"AzDev_Testing_Account_2",true},{"AzDev_Testing_Account_3",false}, {"AzDev_Testing_Account_4",false}
+                {"AzDev_Testing_Account_1",true},
+                {"AzDev_Testing_Account_2",true},
+                {"AzDev_Testing_Account_3",false},
+                {"AzDev_Testing_Account_4",false}
         };
     }
 
     @DataProvider
     public static Object[][] loadObjectDataset() {
         return new Object[][] {
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,"some(GUID)",Collections.singletonList("app1"),"0"},
-                {"Kayenta_Account_2",ObjectType.CANARY_CONFIG,"some(GUID",Collections.singletonList("app2"),"0"},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_LIST,"some(GUID)",Collections.singletonList("app3"),"0"},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_PAIR_LIST,"some(GUID)",Collections.singletonList("app4"),"0"},
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,"fake(GUID)",Collections.singletonList("app5"),"1"},
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,"some(GUID)",Collections.singletonList("app6"),"2"}
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG,"some(GUID)", Collections.singletonList("app1"), "0"},
+                {"Kayenta_Account_2", ObjectType.CANARY_CONFIG,"some(GUID", Collections.singletonList("app2"), "0"},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_LIST,"some(GUID)", Collections.singletonList("app3"), "0"},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_PAIR_LIST,"some(GUID)", Collections.singletonList("app4"), "0"},
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG,"fake(GUID)", Collections.singletonList("app5"), "1"},
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG,"some(GUID)", Collections.singletonList("app6"), "2"}
         };
     }
 
     @DataProvider
     public static Object[][] storeObjectDataset() {
         return new Object[][] {
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,"Test_Canary","Test_App",false},
-                {"Kayenta_Account_2",ObjectType.CANARY_CONFIG,"Test_Canary","Test_App",false},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_LIST,"Test_Canary","Test_App",false},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_PAIR_LIST,"Test_Canary","Test_App",false},
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,"Test_Canary","Test_App",true},
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG, "Test_Canary", "Test_App", false},
+                {"Kayenta_Account_2", ObjectType.CANARY_CONFIG, "Test_Canary", "Test_App", false},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_LIST, "Test_Canary", "Test_App", false},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_PAIR_LIST, "Test_Canary", "Test_App", false},
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG, "Test_Canary", "Test_App", true},
         };
     }
 
     @DataProvider
     public static Object[][] deleteObjectDataset() {
         return new Object[][] {
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,"some(GUID)"},
-                {"Kayenta_Account_2",ObjectType.CANARY_CONFIG,"some(GUID"},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_LIST,"some(GUID)"},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_PAIR_LIST,"some(GUID)"},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_PAIR_LIST,"fake(GUID)"},
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG, "some(GUID)"},
+                {"Kayenta_Account_2", ObjectType.CANARY_CONFIG, "some(GUID"},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_LIST, "some(GUID)"},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_PAIR_LIST, "some(GUID)"},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_PAIR_LIST, "fake(GUID)"},
         };
     }
 
     @DataProvider
     public static Object[][] listObjectKeysDataset() {
         return new Object[][] {
-                {"Kayenta_Account_1",ObjectType.CANARY_CONFIG,Collections.singletonList("Test_App"),true},
-                {"Kayenta_Account_2",ObjectType.CANARY_CONFIG,Collections.singletonList("Test_App"),true},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_LIST,Collections.singletonList("Test_App"),false},
-                {"Kayenta_Account_1",ObjectType.METRIC_SET_PAIR_LIST,Collections.singletonList("Test_App"),true}
+                {"Kayenta_Account_1", ObjectType.CANARY_CONFIG, Collections.singletonList("Test_App"), true},
+                {"Kayenta_Account_2", ObjectType.CANARY_CONFIG, Collections.singletonList("Test_App"), true},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_LIST, Collections.singletonList("Test_App"), false},
+                {"Kayenta_Account_1", ObjectType.METRIC_SET_PAIR_LIST, Collections.singletonList("Test_App"), true}
         };
     }
 

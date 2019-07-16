@@ -35,18 +35,18 @@ public class AzureCredentials {
     @Getter
     private String endpointSuffix;
 
-    public AzureCredentials(String storageAccountName, String accountAccessKey , String endpointSuffix  ) {
+    public AzureCredentials(String storageAccountName, String accountAccessKey, String endpointSuffix ) {
         this.storageAccountName = storageAccountName;
         this.accountAccessKey = accountAccessKey;
         this.endpointSuffix = endpointSuffix;
     }
 
-    public CloudBlobContainer getAzureContainer(String containerName) throws Exception{
+    public CloudBlobContainer getAzureContainer(String containerName) throws Exception {
         final String storageConnectionString =
                 "DefaultEndpointsProtocol=http;"
-                        + "AccountName="+this.storageAccountName+";"
-                        + "AccountKey="+this.accountAccessKey+";"
-                        + "EndpointSuffix="+this.endpointSuffix;
+                        + "AccountName=" +this.storageAccountName+";"
+                        + "AccountKey=" +this.accountAccessKey+";"
+                        + "EndpointSuffix=" +this.endpointSuffix;
         // Retrieve storage account from connection-string.
         CloudStorageAccount storageAccount = CloudStorageAccount.parse(storageConnectionString);
 
