@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.netflix.kayenta.blobs.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,54 +36,50 @@ public class TestableBlobsStorageService extends BlobsStorageService {
     public HashMap<String,String> blobStored;
 
     TestableBlobsStorageService(ObjectMapper kayentaObjectMapper, List<String> accountNames, AccountCredentialsRepository accountCredentialsRepository, CanaryConfigIndex canaryConfigIndex) {
-        super(kayentaObjectMapper, accountNames, accountCredentialsRepository, canaryConfigIndex);
-        this.blobStored = new HashMap<String, String>();
+        super(accountNames, kayentaObjectMapper, accountCredentialsRepository, canaryConfigIndex);
+        this.blobStored = new HashMap<>();
     }
 
     @Override
     protected Iterable<ListBlobItem> listBlobs(CloudBlobContainer container, String prefix, boolean useFlatBlobListing, boolean isFolder) {
-        if(blobStored.get("exceptionKey") == "1")
-        {
+        if (blobStored.get("exceptionKey").equals("1")) {
             throw new IllegalArgumentException("Item not found at "+prefix);
-        }
-        else
-        {
-            Iterable<ListBlobItem> mockBlobItems = new ArrayList<ListBlobItem>();
+        } else {
+            Iterable<ListBlobItem> mockBlobItems = new ArrayList<>();
             String filename = "canary_test.json";
             try {
                if (isFolder) {
                    for (int folderItem = 1; folderItem <= 6; folderItem++) {
-
                        URI uri = new URI("http://cloudblob.blob/sample-container/" + prefix + "/(GUID" + folderItem + ")/" + filename);
                        CloudBlockBlob fakeBlobItem = new CloudBlockBlob(uri);
-                       ((ArrayList<ListBlobItem>) mockBlobItems).add((ListBlobItem) fakeBlobItem);
+                       ((ArrayList<ListBlobItem>) mockBlobItems).add(fakeBlobItem);
                        blobStored.put(String.format("deleteIfexists(%s)", prefix + "/" + filename), "not_invoked");
-
                    }
                } else {
-
                        URI uri = new URI("http://cloudblob.blob/sample-container/" + prefix + "/" + filename);
                        CloudBlockBlob fakeBlobItem = new CloudBlockBlob(uri);
-                       ((ArrayList<ListBlobItem>) mockBlobItems).add((ListBlobItem) fakeBlobItem);
+                       ((ArrayList<ListBlobItem>) mockBlobItems).add(fakeBlobItem);
                        blobStored.put(String.format("deleteIfexists(%s)", prefix + "/" + filename), "not_invoked");
+               }
 
-               }
-                return mockBlobItems;
-               }
-           catch (StorageException | URISyntaxException e) {
-               log.error("Failed to initialiaze, Test Blob" + e.getMessage());
-               }
+               return mockBlobItems;
+            } catch (StorageException | URISyntaxException e) {
+                log.error("Failed to initialiaze, Test Blob" + e.getMessage());
+            }
+
             return mockBlobItems;
-           }
         }
+    }
 
     @Override
     protected String downloadText(CloudBlockBlob blob) {
         String downloadedTextExample;
-        if(blobStored.get("exceptionKey")=="2")
+
+        if (blobStored.get("exceptionKey").equals("2")) {
             downloadedTextExample = "{\"applications\":[ + blobStored.get(\"application\") + ]}";
-        else
+        } else {
             downloadedTextExample = "{\"applications\":[\"" + blobStored.get("application") + "\"]}";
+        }
 
         return downloadedTextExample;
     }
@@ -75,8 +87,7 @@ public class TestableBlobsStorageService extends BlobsStorageService {
     @Override
     public CloudBlockBlob getBlockBlobReference(CloudBlobContainer container, final String blobName) throws URISyntaxException, StorageException {
         URI uri = new URI ( "http://cloudblob.blob/sample-container/"+blobName);
-        CloudBlockBlob fakeBlobItem = new CloudBlockBlob(uri);
-        return fakeBlobItem;
+        return new CloudBlockBlob(uri);
     }
 
     @Override
@@ -86,9 +97,8 @@ public class TestableBlobsStorageService extends BlobsStorageService {
     }
 
     @Override
-    public boolean deleteIfExists(CloudBlockBlob blob) {
+    public void deleteIfExists(CloudBlockBlob blob) {
         blobStored.put(String.format("deleteIfexists(%s)",blob.getName()),"invoked");
-        return true;
     }
 
     @Override
@@ -97,8 +107,6 @@ public class TestableBlobsStorageService extends BlobsStorageService {
     }
 
     @Override
-    public boolean createIfNotExists(CloudBlobContainer container) {
-        return true;
+    public void createIfNotExists(CloudBlobContainer container) {
     }
-
 }

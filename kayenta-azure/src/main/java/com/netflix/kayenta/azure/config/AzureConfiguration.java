@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.netflix.kayenta.azure.config;
 
 import com.netflix.kayenta.azure.security.AzureCredentials;
@@ -14,7 +30,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 @Configuration
@@ -22,7 +37,6 @@ import java.util.List;
 @ConditionalOnProperty("kayenta.azure.enabled")
 @ComponentScan({"com.netflix.kayenta.azure"})
 @Slf4j
-
 public class AzureConfiguration {
 
   @Bean
@@ -33,8 +47,11 @@ public class AzureConfiguration {
 
   @Bean
   boolean registerAzureCredentials(AzureConfigurationProperties azureConfigurationProperties,
-                                   AccountCredentialsRepository accountCredentialsRepository) throws IOException {
-    for (AzureManagedAccount azureManagedAccount : azureConfigurationProperties.getAccounts()) {
+                                   AccountCredentialsRepository accountCredentialsRepository) {
+
+    List<AzureManagedAccount> azureAccounts = azureConfigurationProperties.getAccounts();
+
+    for (AzureManagedAccount azureManagedAccount : azureAccounts) {
       String name = azureManagedAccount.getName();
       String storageAccountName = azureManagedAccount.getStorageAccountName();
       List<AccountCredentials.Type> supportedTypes = azureManagedAccount.getSupportedTypes();
@@ -44,7 +61,6 @@ public class AzureConfiguration {
       try {
         String accountAccessKey = azureManagedAccount.getAccountAccessKey();
         String endpointSuffix = azureManagedAccount.getEndpointSuffix();
-
         AzureCredentials azureCredentials = new AzureCredentials(storageAccountName,accountAccessKey,endpointSuffix);
 
         AzureNamedAccountCredentials.AzureNamedAccountCredentialsBuilder azureNamedAccountCredentialsBuilder =
@@ -65,6 +81,7 @@ public class AzureConfiguration {
             if (StringUtils.isEmpty(rootFolder)) {
               throw new IllegalArgumentException("Azure/Blobs account " + name + " is required to specify a rootFolder.");
             }
+
             azureNamedAccountCredentialsBuilder.rootFolder(rootFolder);
             azureNamedAccountCredentialsBuilder.azureContainer(azureCredentials.getAzureContainer(container));
           }
